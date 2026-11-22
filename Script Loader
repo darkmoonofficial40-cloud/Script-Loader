@@ -5,6 +5,7 @@ local CoreGui = game:GetService("CoreGui")
 
 local player = Players.LocalPlayer
 local DISCORD_INVITE = "https://discord.gg/QxRKp9wNeE"
+local VALID_KEY = "darkmoonhub40"
 
 -- Clean up previous UI instances safely
 local function cleanupExisting()
@@ -131,7 +132,125 @@ local function makeDraggable(dragHandle, targetFrame)
 	end)
 end
 
--- Compact Main Window (396 x 244)
+-- Shared Header Builder with Big 3D "D" Logo
+local function buildHeader(parent, subtitleText)
+	local Header = Instance.new("Frame")
+	Header.Name = "Header"
+	Header.Size = UDim2.new(1, 0, 0, 42)
+	Header.BackgroundColor3 = Color3.fromRGB(14, 15, 23)
+	Header.BackgroundTransparency = 0.2
+	Header.BorderSizePixel = 0
+	Header.Parent = parent
+
+	local HeaderLine = Instance.new("Frame")
+	HeaderLine.Size = UDim2.new(1, 0, 0, 1)
+	HeaderLine.Position = UDim2.new(0, 0, 1, -1)
+	HeaderLine.BackgroundColor3 = Theme.Stroke
+	HeaderLine.BackgroundTransparency = 0.4
+	HeaderLine.BorderSizePixel = 0
+	HeaderLine.Parent = Header
+
+	-- Big 3D "D" Emblem Container
+	local LogoContainer = Instance.new("Frame")
+	LogoContainer.Name = "Logo3DD"
+	LogoContainer.Size = UDim2.new(0, 30, 0, 30)
+	LogoContainer.Position = UDim2.new(0, 10, 0.5, -15)
+	LogoContainer.BackgroundTransparency = 1
+	LogoContainer.Parent = Header
+
+	local Logo3DShadow = Instance.new("Frame")
+	Logo3DShadow.Size = UDim2.new(1, 0, 1, 0)
+	Logo3DShadow.Position = UDim2.new(0, 2, 0, 3)
+	Logo3DShadow.BackgroundColor3 = Theme.AccentDepth
+	Logo3DShadow.BorderSizePixel = 0
+	Logo3DShadow.Parent = LogoContainer
+	addCorner(Logo3DShadow, 8)
+
+	local Logo3DFace = Instance.new("Frame")
+	Logo3DFace.Size = UDim2.new(1, 0, 1, 0)
+	Logo3DFace.Position = UDim2.new(0, 0, 0, 0)
+	Logo3DFace.BackgroundColor3 = Theme.Accent
+	Logo3DFace.BorderSizePixel = 0
+	Logo3DFace.Parent = LogoContainer
+	addCorner(Logo3DFace, 8)
+	addStroke(Logo3DFace, Theme.AccentBright, 1.1, 0.2)
+
+	local Logo3DGrad = Instance.new("UIGradient")
+	Logo3DGrad.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Theme.AccentBright),
+		ColorSequenceKeypoint.new(0.6, Theme.Accent),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(92, 62, 214)),
+	})
+	Logo3DGrad.Rotation = 135
+	Logo3DGrad.Parent = Logo3DFace
+
+	local LogoDShadow = Instance.new("TextLabel")
+	LogoDShadow.Size = UDim2.new(1, 0, 1, 0)
+	LogoDShadow.Position = UDim2.new(0, 1.5, 0, 2)
+	LogoDShadow.BackgroundTransparency = 1
+	LogoDShadow.Text = "D"
+	LogoDShadow.TextColor3 = Color3.fromRGB(34, 18, 96)
+	LogoDShadow.Font = Enum.Font.GothamBlack
+	LogoDShadow.TextSize = 21
+	LogoDShadow.Parent = Logo3DFace
+
+	local LogoDMain = Instance.new("TextLabel")
+	LogoDMain.Size = UDim2.new(1, 0, 1, 0)
+	LogoDMain.Position = UDim2.new(0, 0, 0, 0)
+	LogoDMain.BackgroundTransparency = 1
+	LogoDMain.Text = "D"
+	LogoDMain.TextColor3 = Color3.fromRGB(255, 255, 255)
+	LogoDMain.Font = Enum.Font.GothamBlack
+	LogoDMain.TextSize = 21
+	LogoDMain.Parent = Logo3DFace
+
+	local TitleLabel = Instance.new("TextLabel")
+	TitleLabel.Size = UDim2.new(0, 200, 0, 16)
+	TitleLabel.Position = UDim2.new(0, 47, 0, 6)
+	TitleLabel.BackgroundTransparency = 1
+	TitleLabel.Text = "DARK MOON HUB"
+	TitleLabel.TextColor3 = Theme.TextPrimary
+	TitleLabel.Font = Enum.Font.GothamBold
+	TitleLabel.TextSize = 13
+	TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+	TitleLabel.Parent = Header
+
+	local SubTitleLabel = Instance.new("TextLabel")
+	SubTitleLabel.Size = UDim2.new(0, 235, 0, 12)
+	SubTitleLabel.Position = UDim2.new(0, 48, 0, 23)
+	SubTitleLabel.BackgroundTransparency = 1
+	SubTitleLabel.Text = subtitleText
+	SubTitleLabel.TextColor3 = Theme.TextSecondary
+	SubTitleLabel.Font = Enum.Font.Gotham
+	SubTitleLabel.TextSize = 10
+	SubTitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+	SubTitleLabel.Parent = Header
+
+	local CloseBtn = Instance.new("TextButton")
+	CloseBtn.Size = UDim2.new(0, 24, 0, 24)
+	CloseBtn.Position = UDim2.new(1, -32, 0.5, -12)
+	CloseBtn.BackgroundColor3 = Color3.fromRGB(46, 20, 28)
+	CloseBtn.Text = "✕"
+	CloseBtn.TextColor3 = Theme.Danger
+	CloseBtn.Font = Enum.Font.GothamBold
+	CloseBtn.TextSize = 11
+	CloseBtn.AutoButtonColor = false
+	CloseBtn.Parent = Header
+	addCorner(CloseBtn, 6)
+	addStroke(CloseBtn, Theme.Danger, 1, 0.55)
+
+	CloseBtn.MouseButton1Click:Connect(function()
+		if ScreenGui and ScreenGui.Parent then
+			ScreenGui:Destroy()
+		end
+	end)
+
+	return Header
+end
+
+-- ==========================================
+-- MAIN HUB WINDOW (HIDDEN UNTIL KEY VALID)
+-- ==========================================
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 396, 0, 244)
@@ -139,137 +258,23 @@ MainFrame.Position = UDim2.new(0.5, -198, 0.5, -122)
 MainFrame.BackgroundColor3 = Theme.BgMain
 MainFrame.BorderSizePixel = 0
 MainFrame.ClipsDescendants = true
+MainFrame.Visible = false
 MainFrame.Parent = ScreenGui
 addCorner(MainFrame, 13)
 addStroke(MainFrame, Theme.Stroke, 1.2, 0.15)
 
-local BgGradient = Instance.new("UIGradient")
-BgGradient.Color = ColorSequence.new({
+local MainGrad = Instance.new("UIGradient")
+MainGrad.Color = ColorSequence.new({
 	ColorSequenceKeypoint.new(0, Color3.fromRGB(32, 22, 58)),
 	ColorSequenceKeypoint.new(0.5, Theme.BgMain),
 	ColorSequenceKeypoint.new(1, Theme.BgMain),
 })
-BgGradient.Rotation = 30
-BgGradient.Parent = MainFrame
+MainGrad.Rotation = 30
+MainGrad.Parent = MainFrame
 
--- Top Header Bar
-local Header = Instance.new("Frame")
-Header.Name = "Header"
-Header.Size = UDim2.new(1, 0, 0, 42)
-Header.BackgroundColor3 = Color3.fromRGB(14, 15, 23)
-Header.BackgroundTransparency = 0.2
-Header.BorderSizePixel = 0
-Header.Parent = MainFrame
+local MainHeader = buildHeader(MainFrame, "3D Edition • Auto Discord Copy")
+makeDraggable(MainHeader, MainFrame)
 
-local HeaderLine = Instance.new("Frame")
-HeaderLine.Size = UDim2.new(1, 0, 0, 1)
-HeaderLine.Position = UDim2.new(0, 0, 1, -1)
-HeaderLine.BackgroundColor3 = Theme.Stroke
-HeaderLine.BackgroundTransparency = 0.4
-HeaderLine.BorderSizePixel = 0
-HeaderLine.Parent = Header
-
--- Big 3D "D" Emblem Container
-local LogoContainer = Instance.new("Frame")
-LogoContainer.Name = "Logo3DD"
-LogoContainer.Size = UDim2.new(0, 30, 0, 30)
-LogoContainer.Position = UDim2.new(0, 10, 0.5, -15)
-LogoContainer.BackgroundTransparency = 1
-LogoContainer.Parent = Header
-
--- 3D Extruded Base Shadow Layer
-local Logo3DShadow = Instance.new("Frame")
-Logo3DShadow.Size = UDim2.new(1, 0, 1, 0)
-Logo3DShadow.Position = UDim2.new(0, 2, 0, 3)
-Logo3DShadow.BackgroundColor3 = Theme.AccentDepth
-Logo3DShadow.BorderSizePixel = 0
-Logo3DShadow.Parent = LogoContainer
-addCorner(Logo3DShadow, 8)
-
--- 3D Front Beveled Face
-local Logo3DFace = Instance.new("Frame")
-Logo3DFace.Size = UDim2.new(1, 0, 1, 0)
-Logo3DFace.Position = UDim2.new(0, 0, 0, 0)
-Logo3DFace.BackgroundColor3 = Theme.Accent
-Logo3DFace.BorderSizePixel = 0
-Logo3DFace.Parent = LogoContainer
-addCorner(Logo3DFace, 8)
-addStroke(Logo3DFace, Theme.AccentBright, 1.1, 0.2)
-
-local Logo3DGrad = Instance.new("UIGradient")
-Logo3DGrad.Color = ColorSequence.new({
-	ColorSequenceKeypoint.new(0, Theme.AccentBright),
-	ColorSequenceKeypoint.new(0.6, Theme.Accent),
-	ColorSequenceKeypoint.new(1, Color3.fromRGB(92, 62, 214)),
-})
-Logo3DGrad.Rotation = 135
-Logo3DGrad.Parent = Logo3DFace
-
--- Big "D" Depth Shadow + Top Highlight Glyph
-local LogoDShadow = Instance.new("TextLabel")
-LogoDShadow.Size = UDim2.new(1, 0, 1, 0)
-LogoDShadow.Position = UDim2.new(0, 1.5, 0, 2)
-LogoDShadow.BackgroundTransparency = 1
-LogoDShadow.Text = "D"
-LogoDShadow.TextColor3 = Color3.fromRGB(34, 18, 96)
-LogoDShadow.Font = Enum.Font.GothamBlack
-LogoDShadow.TextSize = 21
-LogoDShadow.Parent = Logo3DFace
-
-local LogoDMain = Instance.new("TextLabel")
-LogoDMain.Size = UDim2.new(1, 0, 1, 0)
-LogoDMain.Position = UDim2.new(0, 0, 0, 0)
-LogoDMain.BackgroundTransparency = 1
-LogoDMain.Text = "D"
-LogoDMain.TextColor3 = Color3.fromRGB(255, 255, 255)
-LogoDMain.Font = Enum.Font.GothamBlack
-LogoDMain.TextSize = 21
-LogoDMain.Parent = Logo3DFace
-
-local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Size = UDim2.new(0, 200, 0, 16)
-TitleLabel.Position = UDim2.new(0, 47, 0, 6)
-TitleLabel.BackgroundTransparency = 1
-TitleLabel.Text = "DARK MOON HUB"
-TitleLabel.TextColor3 = Theme.TextPrimary
-TitleLabel.Font = Enum.Font.GothamBold
-TitleLabel.TextSize = 13
-TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-TitleLabel.Parent = Header
-
-local SubTitleLabel = Instance.new("TextLabel")
-SubTitleLabel.Size = UDim2.new(0, 230, 0, 12)
-SubTitleLabel.Position = UDim2.new(0, 48, 0, 23)
-SubTitleLabel.BackgroundTransparency = 1
-SubTitleLabel.Text = "3D Edition • Auto Discord Copy"
-SubTitleLabel.TextColor3 = Theme.TextSecondary
-SubTitleLabel.Font = Enum.Font.Gotham
-SubTitleLabel.TextSize = 10
-SubTitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-SubTitleLabel.Parent = Header
-
-local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0, 24, 0, 24)
-CloseBtn.Position = UDim2.new(1, -32, 0.5, -12)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(46, 20, 28)
-CloseBtn.Text = "✕"
-CloseBtn.TextColor3 = Theme.Danger
-CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.TextSize = 11
-CloseBtn.AutoButtonColor = false
-CloseBtn.Parent = Header
-addCorner(CloseBtn, 6)
-addStroke(CloseBtn, Theme.Danger, 1, 0.55)
-
-CloseBtn.MouseButton1Click:Connect(function()
-	if ScreenGui and ScreenGui.Parent then
-		ScreenGui:Destroy()
-	end
-end)
-
-makeDraggable(Header, MainFrame)
-
--- Left Navigation Sidebar
 local Sidebar = Instance.new("Frame")
 Sidebar.Name = "Sidebar"
 Sidebar.Size = UDim2.new(0, 126, 1, -52)
@@ -293,7 +298,6 @@ SidebarList.Padding = UDim.new(0, 5)
 SidebarList.HorizontalAlignment = Enum.HorizontalAlignment.Center
 SidebarList.Parent = Sidebar
 
--- Right Content Panel
 local ContentPanel = Instance.new("Frame")
 ContentPanel.Name = "ContentPanel"
 ContentPanel.Size = UDim2.new(1, -148, 1, -52)
@@ -348,7 +352,6 @@ SelectedDesc.TextXAlignment = Enum.TextXAlignment.Left
 SelectedDesc.TextYAlignment = Enum.TextYAlignment.Top
 SelectedDesc.Parent = ContentPanel
 
--- Status Box
 local StatusCard = Instance.new("Frame")
 StatusCard.Size = UDim2.new(1, -20, 0, 26)
 StatusCard.Position = UDim2.new(0, 10, 1, -70)
@@ -378,7 +381,6 @@ StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
 StatusLabel.TextTruncate = Enum.TextTruncate.AtEnd
 StatusLabel.Parent = StatusCard
 
--- 3D Tactile Execute Button
 local ExecuteShadow = Instance.new("Frame")
 ExecuteShadow.Size = UDim2.new(1, -20, 0, 32)
 ExecuteShadow.Position = UDim2.new(0, 10, 1, -36)
@@ -402,7 +404,7 @@ addCorner(ExecuteBtn, 7)
 
 ExecuteBtn.MouseEnter:Connect(function()
 	tween(ExecuteBtn, fastTween, {
-		BackgroundColor3 = AccentBright,
+		BackgroundColor3 = Theme.AccentBright,
 		Position = UDim2.new(0, 10, 1, -39),
 	})
 end)
@@ -411,6 +413,180 @@ ExecuteBtn.MouseLeave:Connect(function()
 		BackgroundColor3 = Theme.Accent,
 		Position = UDim2.new(0, 10, 1, -38),
 	})
+end)
+
+-- ==========================================
+-- MODERN KEY SYSTEM GUI
+-- ==========================================
+local KeyFrame = Instance.new("Frame")
+KeyFrame.Name = "KeySystemFrame"
+KeyFrame.Size = UDim2.new(0, 340, 0, 212)
+KeyFrame.Position = UDim2.new(0.5, -170, 0.5, -106)
+KeyFrame.BackgroundColor3 = Theme.BgMain
+KeyFrame.BorderSizePixel = 0
+KeyFrame.ClipsDescendants = true
+KeyFrame.Parent = ScreenGui
+addCorner(KeyFrame, 13)
+addStroke(KeyFrame, Theme.Stroke, 1.2, 0.15)
+
+local KeyGrad = Instance.new("UIGradient")
+KeyGrad.Color = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(32, 22, 58)),
+	ColorSequenceKeypoint.new(0.55, Theme.BgMain),
+	ColorSequenceKeypoint.new(1, Theme.BgMain),
+})
+KeyGrad.Rotation = 30
+KeyGrad.Parent = KeyFrame
+
+local KeyHeader = buildHeader(KeyFrame, "Key System • Authentication")
+makeDraggable(KeyHeader, KeyFrame)
+
+local KeyCard = Instance.new("Frame")
+KeyCard.Size = UDim2.new(1, -20, 1, -52)
+KeyCard.Position = UDim2.new(0, 10, 0, 46)
+KeyCard.BackgroundColor3 = Theme.BgCard
+KeyCard.BackgroundTransparency = 0.2
+KeyCard.BorderSizePixel = 0
+KeyCard.Parent = KeyFrame
+addCorner(KeyCard, 9)
+addStroke(KeyCard, Theme.Stroke, 1, 0.45)
+
+local KeyHeading = Instance.new("TextLabel")
+KeyHeading.Size = UDim2.new(1, -20, 0, 18)
+KeyHeading.Position = UDim2.new(0, 10, 0, 8)
+KeyHeading.BackgroundTransparency = 1
+KeyHeading.Text = "ENTER ACCESS KEY"
+KeyHeading.TextColor3 = Theme.TextPrimary
+KeyHeading.Font = Enum.Font.GothamBold
+KeyHeading.TextSize = 12
+KeyHeading.TextXAlignment = Enum.TextXAlignment.Left
+KeyHeading.Parent = KeyCard
+
+local KeyHint = Instance.new("TextLabel")
+KeyHint.Size = UDim2.new(1, -20, 0, 14)
+KeyHint.Position = UDim2.new(0, 10, 0, 25)
+KeyHint.BackgroundTransparency = 1
+KeyHint.Text = "Type your key below to unlock Dark Moon Hub."
+KeyHint.TextColor3 = Theme.TextSecondary
+KeyHint.Font = Enum.Font.Gotham
+KeyHint.TextSize = 10
+KeyHint.TextXAlignment = Enum.TextXAlignment.Left
+KeyHint.Parent = KeyCard
+
+local KeyInputBox = Instance.new("TextBox")
+KeyInputBox.Name = "KeyInput"
+KeyInputBox.Size = UDim2.new(1, -20, 0, 32)
+KeyInputBox.Position = UDim2.new(0, 10, 0, 45)
+KeyInputBox.BackgroundColor3 = Theme.BgElevated
+KeyInputBox.Text = ""
+KeyInputBox.PlaceholderText = "Enter key..."
+KeyInputBox.PlaceholderColor3 = Color3.fromRGB(115, 122, 152)
+KeyInputBox.TextColor3 = Theme.TextPrimary
+KeyInputBox.Font = Enum.Font.GothamMedium
+KeyInputBox.TextSize = 11
+KeyInputBox.ClearTextOnFocus = false
+KeyInputBox.Parent = KeyCard
+addCorner(KeyInputBox, 7)
+local KeyInputStroke = addStroke(KeyInputBox, Theme.Stroke, 1, 0.3)
+
+KeyInputBox.Focused:Connect(function()
+	tween(KeyInputStroke, fastTween, { Color = Theme.Accent, Transparency = 0 })
+end)
+KeyInputBox.FocusLost:Connect(function()
+	tween(KeyInputStroke, fastTween, { Color = Theme.Stroke, Transparency = 0.3 })
+end)
+
+local KeyStatusLabel = Instance.new("TextLabel")
+KeyStatusLabel.Size = UDim2.new(1, -20, 0, 16)
+KeyStatusLabel.Position = UDim2.new(0, 10, 0, 81)
+KeyStatusLabel.BackgroundTransparency = 1
+KeyStatusLabel.Text = "Waiting for key input..."
+KeyStatusLabel.TextColor3 = Theme.TextSecondary
+KeyStatusLabel.Font = Enum.Font.GothamMedium
+KeyStatusLabel.TextSize = 10
+KeyStatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+KeyStatusLabel.Parent = KeyCard
+
+-- Verify Key Button (3D)
+local VerifyShadow = Instance.new("Frame")
+VerifyShadow.Size = UDim2.new(0.58, -13, 0, 30)
+VerifyShadow.Position = UDim2.new(0, 10, 1, -38)
+VerifyShadow.BackgroundColor3 = Theme.AccentDepth
+VerifyShadow.BorderSizePixel = 0
+VerifyShadow.Parent = KeyCard
+addCorner(VerifyShadow, 7)
+
+local VerifyBtn = Instance.new("TextButton")
+VerifyBtn.Name = "VerifyKeyButton"
+VerifyBtn.Size = UDim2.new(0.58, -13, 0, 30)
+VerifyBtn.Position = UDim2.new(0, 10, 1, -40)
+VerifyBtn.BackgroundColor3 = Theme.Accent
+VerifyBtn.Text = "UNLOCK HUB"
+VerifyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+VerifyBtn.Font = Enum.Font.GothamBold
+VerifyBtn.TextSize = 11
+VerifyBtn.AutoButtonColor = false
+VerifyBtn.Parent = KeyCard
+addCorner(VerifyBtn, 7)
+
+-- Copy Discord Button
+local DiscordBtn = Instance.new("TextButton")
+DiscordBtn.Name = "GetKeyDiscordButton"
+DiscordBtn.Size = UDim2.new(0.42, -13, 0, 30)
+DiscordBtn.Position = UDim2.new(0.58, 3, 1, -40)
+DiscordBtn.BackgroundColor3 = Theme.BgElevated
+DiscordBtn.Text = "GET KEY"
+DiscordBtn.TextColor3 = Theme.AccentBright
+DiscordBtn.Font = Enum.Font.GothamBold
+DiscordBtn.TextSize = 11
+DiscordBtn.AutoButtonColor = false
+DiscordBtn.Parent = KeyCard
+addCorner(DiscordBtn, 7)
+addStroke(DiscordBtn, Theme.Accent, 1, 0.35)
+
+DiscordBtn.MouseButton1Click:Connect(function()
+	local copied = copyDiscordInvite()
+	if copied then
+		KeyStatusLabel.Text = "Discord link copied to clipboard!"
+		KeyStatusLabel.TextColor3 = Theme.Success
+	else
+		KeyStatusLabel.Text = "Invite: " .. DISCORD_INVITE
+		KeyStatusLabel.TextColor3 = Theme.Warning
+	end
+end)
+
+local function unlockMainHub()
+	KeyStatusLabel.Text = "Key verified! Opening Dark Moon Hub..."
+	KeyStatusLabel.TextColor3 = Theme.Success
+	task.wait(0.25)
+	if KeyFrame and KeyFrame.Parent then
+		KeyFrame:Destroy()
+	end
+	if MainFrame and MainFrame.Parent then
+		MainFrame.Visible = true
+	end
+end
+
+local function checkKey()
+	local entered = string.gsub(KeyInputBox.Text or "", "^%s*(.-)%s*$", "%1")
+	if entered == VALID_KEY then
+		unlockMainHub()
+	elseif entered == "" then
+		KeyStatusLabel.Text = "Please enter a key first."
+		KeyStatusLabel.TextColor3 = Theme.Warning
+		tween(KeyInputStroke, fastTween, { Color = Theme.Warning, Transparency = 0 })
+	else
+		KeyStatusLabel.Text = "Invalid key! Try again or click GET KEY."
+		KeyStatusLabel.TextColor3 = Theme.Danger
+		tween(KeyInputStroke, fastTween, { Color = Theme.Danger, Transparency = 0 })
+	end
+end
+
+VerifyBtn.MouseButton1Click:Connect(checkKey)
+KeyInputBox.FocusLost:Connect(function(enterPressed)
+	if enterPressed then
+		checkKey()
+	end
 end)
 
 -- ==========================================
